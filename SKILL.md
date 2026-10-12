@@ -23,7 +23,10 @@ python ~/.gemini/antigravity-cli/skills/token-metrics/token_metrics.py
 
 ## Model Pricing Configuration & Web Lookup Workflow
 Model rates are stored strictly in `model_pricing.json` (located alongside `token_metrics.py`).
-Rates are configured per 1M tokens as an array of three floats: `[uncached_input, cached_input, output]`.
+Each entry defines:
+- `rates`: array of three floats per 1M tokens `[uncached_input, cached_input, output]`
+- `verified_at`: ISO date (`YYYY-MM-DD`) when the rates were last verified against official vendor documentation.
+- (Optional) `intervals`: historical date intervals for effective rates over time.
 
 ### Workflow When Encountering Missing Models:
 If the command fails with `[ERROR] Missing Model Pricing: Pricing not found for model ...`:
@@ -36,7 +39,11 @@ If the command fails with `[ERROR] Missing Model Pricing: Pricing not found for 
    - Uncached prompt / input tokens ($/1M)
    - Cached prompt reads ($/1M)
    - Output / generation tokens ($/1M)
-4. Add the entry to `model_pricing.json` (in both `~/.gemini/antigravity-cli/skills/token-metrics/model_pricing.json` and the local repo if working in it).
+4. Add the entry to `model_pricing.json` with today's date in `verified_at` (in both `~/.gemini/antigravity-cli/skills/token-metrics/model_pricing.json` and the local repo if working in it).
 5. Re-run `token_metrics.py` to regenerate the accurate metrics.
+
+### Verifying Updated Pricing & Price Cuts:
+If the user mentions or asks to verify updated pricing/price cuts, check the vendor pricing page, update the rates (or add a new effective date interval) in `model_pricing.json` along with the updated `verified_at` date, and regenerate the metrics.
+
 
 

@@ -90,7 +90,7 @@ def get_pricing_file_path() -> Path:
 
 
 def load_model_pricing() -> Dict[str, Tuple[float, float, float]]:
-    """Loads model pricing from model_pricing.json, falling back to built-ins."""
+    """Loads model pricing from model_pricing.json supporting flat arrays or dicts with verified_at."""
     table = dict(DEFAULT_MODEL_PRICING)
     p_file = get_pricing_file_path()
     if p_file.exists():
@@ -100,9 +100,20 @@ def load_model_pricing() -> Dict[str, Tuple[float, float, float]]:
                 for k, v in data.items():
                     if isinstance(v, (list, tuple)) and len(v) == 3:
                         table[k] = (float(v[0]), float(v[1]), float(v[2]))
+                    elif isinstance(v, dict):
+                        # Support object format: {"rates": [in, cache, out], "verified_at": "..."}
+                        rates = v.get("rates")
+                        if isinstance(rates, (list, tuple)) and len(rates) == 3:
+                            table[k] = (float(rates[0]), float(rates[1]), float(rates[2]))
+                        elif "intervals" in v and isinstance(v["intervals"], list) and v["intervals"]:
+                            latest_interval = v["intervals"][-1]
+                            int_rates = latest_interval.get("rates")
+                            if isinstance(int_rates, (list, tuple)) and len(int_rates) == 3:
+                                table[k] = (float(int_rates[0]), float(int_rates[1]), float(int_rates[2]))
         except Exception:
             pass
     return table
+
 
 
 # Load runtime table
