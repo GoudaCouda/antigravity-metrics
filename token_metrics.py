@@ -40,8 +40,8 @@ except ImportError:
     RICH_AVAILABLE = False
 
 
-# Model Pricing Rates per 1M tokens: (uncached_prompt, cached_prompt, output_generation)
-MODEL_PRICING_TABLE: Dict[str, Tuple[float, float, float]] = {
+# Default Model Pricing Rates per 1M tokens: (uncached_prompt, cached_prompt, output_generation)
+DEFAULT_MODEL_PRICING: Dict[str, Tuple[float, float, float]] = {
     # Gemini Flash Tier ($0.075 / $0.01875 / $0.300 per 1M)
     "gemini-3.8-flash": (0.075, 0.01875, 0.30),
     "gemini-3.7-flash": (0.075, 0.01875, 0.30),
@@ -74,6 +74,41 @@ MODEL_PRICING_TABLE: Dict[str, Tuple[float, float, float]] = {
 }
 
 
+def get_pricing_file_path() -> Path:
+    """Finds model_pricing.json next to this script or in the global skill directory."""
+    script_dir = Path(__file__).resolve().parent
+    local_path = script_dir / "model_pricing.json"
+    if local_path.exists():
+        return local_path
+
+    home = Path.home()
+    global_path = home / ".gemini" / "antigravity-cli" / "skills" / "token-metrics" / "model_pricing.json"
+    if global_path.exists():
+        return global_path
+
+    return local_path
+
+
+def load_model_pricing() -> Dict[str, Tuple[float, float, float]]:
+    """Loads model pricing from model_pricing.json, falling back to built-ins."""
+    table = dict(DEFAULT_MODEL_PRICING)
+    p_file = get_pricing_file_path()
+    if p_file.exists():
+        try:
+            with open(p_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                for k, v in data.items():
+                    if isinstance(v, (list, tuple)) and len(v) == 3:
+                        table[k] = (float(v[0]), float(v[1]), float(v[2]))
+        except Exception:
+            pass
+    return table
+
+
+# Load runtime table
+MODEL_PRICING_TABLE: Dict[str, Tuple[float, float, float]] = load_model_pricing()
+
+
 def get_base_dirs() -> Tuple[Path, Path]:
     home = Path.home()
     app_dir = home / ".gemini" / "antigravity-cli"
@@ -90,6 +125,10 @@ def parse_model_string(raw: str) -> Tuple[str, str]:
 
 
 def resolve_model_rates(base_name: str) -> Tuple[str, Tuple[float, float, float]]:
+    global MODEL_PRICING_TABLE
+    if not MODEL_PRICING_TABLE:
+        MODEL_PRICING_TABLE = load_model_pricing()
+
     norm = base_name.lower().replace(" ", "-").replace("_", "-")
     for key, rates in MODEL_PRICING_TABLE.items():
         if key in norm:
@@ -106,7 +145,8 @@ def resolve_model_rates(base_name: str) -> Tuple[str, Tuple[float, float, float]
     if "gpt" in norm or "oss" in norm:
         return "gpt-oss-tier", (0.15, 0.0375, 0.60)
 
-    return "default-tier", MODEL_PRICING_TABLE["default"]
+    return "default-tier", MODEL_PRICING_TABLE.get("default", (0.075, 0.01875, 0.30))
+
 
 
 def get_conversation_metadata_from_db(app_dir: Path, conv_id: str) -> Dict[str, Any]:
