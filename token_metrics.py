@@ -109,6 +109,18 @@ def load_model_pricing() -> Dict[str, Tuple[float, float, float]]:
 MODEL_PRICING_TABLE: Dict[str, Tuple[float, float, float]] = load_model_pricing()
 
 
+class MissingModelPricingError(Exception):
+    """Raised when a model is not found in model_pricing.json."""
+    def __init__(self, model_name: str, normalized_name: str):
+        self.model_name = model_name
+        self.normalized_name = normalized_name
+        super().__init__(
+            f"Pricing not found for model '{model_name}' (normalized: '{normalized_name}') in model_pricing.json.\n"
+            f"Please look up official pricing and add it to model_pricing.json:\n"
+            f'  "{normalized_name}": [uncached_prompt_per_1m, cached_prompt_per_1m, output_per_1m]'
+        )
+
+
 def get_base_dirs() -> Tuple[Path, Path]:
     home = Path.home()
     app_dir = home / ".gemini" / "antigravity-cli"
@@ -131,21 +143,11 @@ def resolve_model_rates(base_name: str) -> Tuple[str, Tuple[float, float, float]
 
     norm = base_name.lower().replace(" ", "-").replace("_", "-")
     for key, rates in MODEL_PRICING_TABLE.items():
-        if key in norm:
+        if key in norm or norm in key:
             return key, rates
 
-    if "flash" in norm:
-        return "gemini-flash-tier", (0.075, 0.01875, 0.30)
-    if "sonnet" in norm:
-        return "claude-sonnet-tier", (3.00, 0.30, 15.00)
-    if "haiku" in norm:
-        return "claude-haiku-tier", (0.80, 0.08, 4.00)
-    if "pro" in norm:
-        return "gemini-pro-tier", (1.25, 0.3125, 5.00)
-    if "gpt" in norm or "oss" in norm:
-        return "gpt-oss-tier", (0.15, 0.0375, 0.60)
+    raise MissingModelPricingError(base_name, norm)
 
-    return "default-tier", MODEL_PRICING_TABLE.get("default", (0.075, 0.01875, 0.30))
 
 
 
@@ -690,7 +692,11 @@ def main():
         sys.exit(1)
 
     target_dir = brain_dir / target_id
-    data = parse_conversation(target_id, target_dir, app_dir, brain_dir)
+    try:
+        data = parse_conversation(target_id, target_dir, app_dir, brain_dir)
+    except MissingModelPricingError as e:
+        print(f"\n[ERROR] Missing Model Pricing: {e}\n", file=sys.stderr)
+        sys.exit(2)
 
     if args.json:
         print(json.dumps(data, indent=2))
