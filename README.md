@@ -15,6 +15,15 @@
 
 ### Real-Time Session Summary Card
 ```text
+
+
+> /token-metrics
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+esc to cancel                                                                      accept-edits · Gemini  Flash · medium
+
+● Ran (python -c " import os os.environ['NO_COLOR'] = '1' import subprocess, sys res = subproces...) (ctrl+o to expand)
+
+
 ╭────────────────────── ⚡ Token & Cost Summary ──────────────────────╮
 │                                                                     │
 │  ESTIMATED COST                ACTIVE MODEL                         │
@@ -54,8 +63,8 @@
 
 - **🎯 Zero-Config Active Session Detection**: Automatically targets your currently running Antigravity conversation without needing session UUIDs.
 - **⚡ Prompt Cache Tracking**: Measures uncached input tokens vs. cached reads, displays an inline wide bar (`[█████████░]`), and calculates exact dollar savings.
-- **🔄 Multi-Model Switching Attribution**: Seamlessly tracks when a conversation switches models (e.g. Gemini 3.8 Flash ➔ Claude Sonnet 4.6 ➔ GPT-OSS 120B) and attributes exact tokens, turns, and costs to each model individually.
-- **📊 Activity Telemetry**: Tracks user turns, planner iterations, tool executions, average generation length per turn, and cost per turn.
+- **🔄 Multi-Model Switching **: Seamlessly tracks when a conversation switches models (e.g. Gemini 3.8 Flash ➔ Claude Sonnet 4.6 ➔ GPT-OSS 120B) and attributes exact tokens, turns, and costs to each model individually.
+- **📊 Activity Stats**: Tracks user turns, planner iterations, tool executions, average generation length per turn, and cost per turn.
 - **📑 Conversation History Table**: List all recent sessions (`--list`) with live status indicators (`● Active`, `○ Idle`), step counts, and active models.
 - **🤖 JSON Export**: Pipe machine-readable metrics into CI/CD, logging, or dashboards with `--json`.
 
@@ -108,11 +117,6 @@ antigravity-metrics
 token-metrics
 ```
 
-#### Quick Standalone Run (No Installation Required)
-```bash
-python token_metrics.py
-```
-
 ---
 
 ## 🛠 Usage & CLI Flags
@@ -126,27 +130,7 @@ python token_metrics.py
 | `antigravity-metrics --list` | List recent conversations with model, steps, and status |
 | `antigravity-metrics --json` | Output structured raw JSON for pipelines or monitoring |
 
----
-
-## 💰 Supported Model Pricing Table
-
-Rates per 1M tokens (Standard API list pricing):
-
-| Model Family | Direct Input | Cache Read | Output |
-| :--- | :---: | :---: | :---: |
-| **Gemini 3.8 / 3.7 / 3.5 / 2.5 Flash** | $0.075 | $0.01875 | $0.300 |
-| **Gemini 3.8 / 3.1 / 2.5 / 1.5 Pro** | $1.250 | $0.31250 | $5.000 |
-| **Claude Sonnet 4.6 / 3.7 / 3.5** | $3.000 | $0.30000 | $15.000 |
-| **Claude 3.5 Haiku** | $0.800 | $0.08000 | $4.000 |
-| **Claude 3 Opus** | $15.000 | $1.50000 | $75.000 |
-| **GPT-4o** | $2.500 | $1.25000 | $10.000 |
-| **GPT-4o mini** | $0.150 | $0.07500 | $0.600 |
-| **GPT-OSS 120B** | $0.150 | $0.03750 | $0.600 |
-| **o3-mini** | $1.100 | $0.55000 | $4.400 |
-| **o1** | $15.000 | $7.50000 | $60.000 |
-
----
 
 ## 📄 License
 
-MIT © [Austin (GoudaCouda)](https://github.com/GoudaCouda)
+MIT © [GoudaCouda](https://github.com/GoudaCouda)
