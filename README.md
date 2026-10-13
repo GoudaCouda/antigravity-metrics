@@ -65,39 +65,39 @@ You can install and use `antigravity-metrics` either as a **native Antigravity S
 
 ### Option A: Install as an Antigravity Skill (Recommended)
 
-To invoke metrics natively in your chat sessions via the `/token-metrics` slash command, run the 1-line installer:
+To invoke metrics natively in your chat sessions via the `/token-metrics` slash command in **both the Antigravity IDE and `agy` CLI**, install directly into the global configuration directory (`~/.gemini/config/skills/token_metrics`):
 
-#### Quick 1-Line Install to default Antigravity Location
+#### Quick 1-Line Install to Global Config Location
 
 Streams directly from GitHub into memory and extracts without creating temporary archive files:
 
 **Linux / macOS:**
 ```bash
-mkdir -p ~/.gemini/antigravity-cli/skills/token-metrics && curl -sSL https://github.com/GoudaCouda/antigravity-metrics/releases/latest/download/token-metrics.tar.gz | tar -xz -C ~/.gemini/antigravity-cli/skills/token-metrics
+mkdir -p ~/.gemini/config/skills/token_metrics && curl -sSL https://github.com/GoudaCouda/antigravity-metrics/releases/latest/download/token-metrics.tar.gz | tar -xz -C ~/.gemini/config/skills/token_metrics
 ```
 
 **Windows (PowerShell):**
 ```powershell
-New-Item -ItemType Directory -Path "$HOME\.gemini\antigravity-cli\skills\token-metrics" -Force; curl.exe -sSL https://github.com/GoudaCouda/antigravity-metrics/releases/latest/download/token-metrics.tar.gz | tar.exe -xz -C "$HOME\.gemini\antigravity-cli\skills\token-metrics"
+New-Item -ItemType Directory -Path "$HOME\.gemini\config\skills\token_metrics" -Force; curl.exe -sSL https://github.com/GoudaCouda/antigravity-metrics/releases/latest/download/token-metrics.tar.gz | tar.exe -xz -C "$HOME\.gemini\config\skills\token_metrics"
 ```
 
 #### Alternative: Install via Git Clone
 
 **Linux / macOS:**
 ```bash
-git clone https://github.com/GoudaCouda/antigravity-metrics.git ~/.gemini/antigravity-cli/skills/token-metrics
+git clone https://github.com/GoudaCouda/antigravity-metrics.git ~/.gemini/config/skills/token_metrics
 ```
 
 **Windows (PowerShell):**
 ```powershell
-git clone https://github.com/GoudaCouda/antigravity-metrics.git "$HOME\.gemini\antigravity-cli\skills\token-metrics"
+git clone https://github.com/GoudaCouda/antigravity-metrics.git "$HOME\.gemini\config\skills\token_metrics"
 ```
 
 Once installed, simply type:
 ```text
 /token-metrics
 ```
-inside any Antigravity conversation!
+inside any Antigravity conversation (IDE or CLI)!
 
 ---
 

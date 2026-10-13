@@ -66,11 +66,11 @@ def render_summary_card(data: Dict[str, Any]) -> None:
 
     # 1. Cost & Model Header
     cost_text = Text()
-    cost_text.append("ESTIMATED COST\n", style="bold dim")
+    cost_text.append("ESTIMATED COST\n", style="bold cyan")
     cost_text.append(cost_str, style="bold green")
 
     model_text = Text()
-    model_text.append("ACTIVE MODEL\n", style="bold dim")
+    model_text.append("ACTIVE MODEL\n", style="bold cyan")
     model_text.append(model_name, style="bold yellow")
     if effort_tag:
         model_text.append(f" {effort_tag}", style="magenta")
@@ -80,7 +80,7 @@ def render_summary_card(data: Dict[str, Any]) -> None:
 
     # 2. Token Usage & Cache Efficiency
     tokens_text = Text()
-    tokens_text.append("TOKEN USAGE\n", style="bold dim")
+    tokens_text.append("TOKEN USAGE\n", style="bold cyan")
     tokens_text.append("• Input:   ", style="dim")
     tokens_text.append(f"{tm.get('input_tokens', 0):,}\n", style="bold white")
     tokens_text.append("• Output:  ", style="dim")
@@ -91,16 +91,18 @@ def render_summary_card(data: Dict[str, Any]) -> None:
     bar_len = 10 if card_width >= 66 else 6
     filled = int(round(hit_rate / 100.0 * bar_len))
     bar = "█" * filled + "░" * (bar_len - filled)
-    bar_color = "green" if hit_rate >= 50 else ("yellow" if hit_rate > 0 else "dim")
-    cache_style = "bold green" if hit_rate >= 50 else ("bold yellow" if hit_rate > 0 else "dim")
+    bar_color = "green" if hit_rate >= 50 else ("yellow" if hit_rate > 0 else "dim white")
+    cache_style = "bold green" if hit_rate >= 50 else ("bold yellow" if hit_rate > 0 else "dim white")
 
     cache_text = Text()
-    cache_text.append("CACHE EFFICIENCY\n", style="bold dim")
+    cache_text.append("CACHE EFFICIENCY\n", style="bold cyan")
     cache_text.append("• Hit Rate: ", style="dim")
     cache_text.append(f"{hit_rate:.1f}% ", style=cache_style)
     cache_text.append(f"[{bar}]\n", style=bar_color)
     cache_text.append("• Reused:   ", style="dim")
-    cache_text.append(f"{tm.get('cache_read_tokens', 0):,} tok\n", style="dim white")
+    reused_tok = tm.get('cache_read_tokens', 0)
+    reused_style = "bold green" if reused_tok > 0 else "dim white"
+    cache_text.append(f"{reused_tok:,} tok\n", style=reused_style)
     cache_text.append("• Savings:  ", style="dim")
     cache_text.append(savings_str, style="bold cyan")
     cache_text.append(f" ({savings_pct:.0f}% off)", style="dim")
@@ -112,13 +114,13 @@ def render_summary_card(data: Dict[str, Any]) -> None:
 
     # 3. Model breakdown section if multiple models used
     if len(model_breakdown) > 1:
-        main.add_row(Rule(style="dim"))
-        main.add_row(Text("BREAKDOWN BY MODEL", style="bold dim"))
+        main.add_row(Rule(style="cyan"))
+        main.add_row(Text("BREAKDOWN BY MODEL", style="bold cyan"))
         mb_table = Table(box=None, show_header=False, padding=(0, 1), expand=True)
         mb_table.add_column("Model", style="bold yellow", ratio=3, overflow="ellipsis", no_wrap=True)
         mb_table.add_column("Cost", justify="right", style="bold green", min_width=8, no_wrap=True)
         mb_table.add_column("Turns", justify="right", style="dim white", min_width=8, no_wrap=True)
-        mb_table.add_column("Tokens", justify="right", style="dim", min_width=12, no_wrap=True)
+        mb_table.add_column("Tokens", justify="right", style="dim cyan", min_width=12, no_wrap=True)
         for mk, mb in model_breakdown.items():
             mb_cost = mb["estimated_cost_usd"]
             mb_cost_str = f"${mb_cost:.4f}" if mb_cost < 1.0 else f"${mb_cost:.2f}"
@@ -139,8 +141,8 @@ def render_summary_card(data: Dict[str, Any]) -> None:
     avg_out = int(total_out / p_res) if p_res > 0 else 0
     avg_in = int(total_in / u_in) if u_in > 0 else 0
 
-    main.add_row(Rule(style="dim"))
-    main.add_row(Text("ACTIVITY", style="bold dim"))
+    main.add_row(Rule(style="cyan"))
+    main.add_row(Text("ACTIVITY", style="bold cyan"))
 
     act_grid = Table.grid(padding=(0, col_pad), expand=True)
     act_grid.add_column("Left", min_width=col_w)
@@ -171,7 +173,7 @@ def render_summary_card(data: Dict[str, Any]) -> None:
     panel = Panel(
         main,
         title="[bold cyan]⚡ Token & Cost Summary[/bold cyan]",
-        subtitle=f"[dim]{display_title}[/dim]",
+        subtitle=f"[bold white]{display_title}[/bold white]",
         box=box.ROUNDED,
         border_style="cyan",
         padding=(1, pad_h),

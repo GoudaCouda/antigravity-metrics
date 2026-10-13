@@ -1,6 +1,7 @@
 """Configuration and directory resolution for Antigravity Metrics."""
 
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Any, Dict, Tuple
@@ -14,9 +15,12 @@ if sys.stdout.encoding and sys.stdout.encoding.lower() not in ("utf-8", "utf8"):
 
 
 def get_base_dirs() -> Tuple[Path, Path]:
-    """Returns (app_dir, brain_dir) for Antigravity CLI."""
-    home = Path.home()
-    app_dir = home / ".gemini" / "antigravity-cli"
+    env_app_dir = os.environ.get("ANTIGRAVITY_APP_DATA_DIR")
+    if env_app_dir:
+        app_dir = Path(env_app_dir)
+    else:
+        home = Path.home()
+        app_dir = home / ".gemini" / "antigravity-cli"
     brain_dir = app_dir / "brain"
     return app_dir, brain_dir
 
@@ -28,13 +32,15 @@ def get_pricing_file_path() -> Path:
         return local_path
 
     home = Path.home()
-    config_path = home / ".gemini" / "config" / "skills" / "token-metrics" / "model_pricing.json"
-    if config_path.exists():
-        return config_path
-
-    global_path = home / ".gemini" / "antigravity-cli" / "skills" / "token-metrics" / "model_pricing.json"
-    if global_path.exists():
-        return global_path
+    candidates = [
+        home / ".gemini" / "config" / "skills" / "token_metrics" / "model_pricing.json",
+        home / ".gemini" / "config" / "skills" / "token-metrics" / "model_pricing.json",
+        home / ".gemini" / "antigravity-cli" / "skills" / "token_metrics" / "model_pricing.json",
+        home / ".gemini" / "antigravity-cli" / "skills" / "token-metrics" / "model_pricing.json",
+    ]
+    for c in candidates:
+        if c.exists():
+            return c
 
     return local_path
 
@@ -46,13 +52,15 @@ def get_config_file_path() -> Path:
         return local_path
 
     home = Path.home()
-    config_path = home / ".gemini" / "config" / "skills" / "token-metrics" / "config.json"
-    if config_path.exists():
-        return config_path
-
-    global_path = home / ".gemini" / "antigravity-cli" / "skills" / "token-metrics" / "config.json"
-    if global_path.exists():
-        return global_path
+    candidates = [
+        home / ".gemini" / "config" / "skills" / "token_metrics" / "config.json",
+        home / ".gemini" / "config" / "skills" / "token-metrics" / "config.json",
+        home / ".gemini" / "antigravity-cli" / "skills" / "token_metrics" / "config.json",
+        home / ".gemini" / "antigravity-cli" / "skills" / "token-metrics" / "config.json",
+    ]
+    for c in candidates:
+        if c.exists():
+            return c
 
     return local_path
 
