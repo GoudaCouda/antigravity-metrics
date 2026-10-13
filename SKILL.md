@@ -13,8 +13,7 @@ Run the standalone script from any working directory:
 python ~/.gemini/antigravity-cli/skills/token-metrics/token_metrics.py
 ```
 
-> [!IMPORTANT]
-> **Default Execution**: Always run `python ~/.gemini/antigravity-cli/skills/token-metrics/token_metrics.py` directly without `--models` or other extra flags. The summary card automatically displays the model breakdown whenever multiple models are used. Do **NOT** run `--models`.
+The summary card automatically displays the model breakdown whenever multiple models are used.
 
 ## Command Line Options
 - `python ~/.gemini/antigravity-cli/skills/token-metrics/token_metrics.py` : Clean TUI summary card for active conversation (default)
@@ -45,18 +44,16 @@ If `config.json` is missing or does not have `"pricing_source"` defined, the age
 
 Save their selection (`"openrouter"`, `"github"`, or `"vertex"`) into `config.json`.
 
-*(Note: When a user runs `token_metrics.py` directly in a terminal as a standalone CLI without an agent, the CLI provides an interactive terminal selection prompt or allows `--set-source <openrouter|github>`).*
-
 ---
 
 ## Price Retrieval Workflows by Source
 
 ### Option 1: OpenRouter API Query (Default & Baked-in)
-`token_metrics.py` queries OpenRouter without author restrictions (supporting Google, Anthropic, OpenAI, Meta, etc.):
+Queries OpenRouter without author restrictions (supporting Google, Anthropic, OpenAI, Meta, etc.):
 ```
 https://openrouter.ai/api/v1/models?q=<MODEL_NAME>&output_modalities=text
 ```
-From the returned JSON, only the necessary rate fields are extracted and converted to per-1M tokens:
+From the returned JSON, rate fields are extracted and converted to per-1M tokens:
 - `price_per_1m_input`: `pricing.prompt * 1_000_000`
 - `price_per_1m_cached`: `pricing.input_cache_read * 1_000_000`
 - `price_per_1m_output`: `pricing.completion * 1_000_000`
@@ -72,34 +69,35 @@ Or download the latest verified raw JSON from:
 and update local `model_pricing.json`.
 
 ### Option 3: Google Vertex AI Docs (Agent Web Lookup Only)
-Only available when run via an AI agent session (cannot be done by standalone CLI without LLM/scraping):
+Only available when run via an AI agent session:
 Endpoint:
 `https://cloud.google.com/gemini-enterprise-agent-platform/generative-ai/pricing?hl=en#googlemodels`
 Parse the table for the requested model name, noting any introductory period dates.
 
 ---
 
-## Model Pricing Schema & Expiration Mechanic
+## Model Pricing Schema
 
-Model rates are stored strictly in `model_pricing.json` (located alongside `token_metrics.py`).
-Each entry follows the Google Vertex AI Generative AI schema options:
-- `model`: Model name (e.g., `Google: Gemini 3.8 Flash`)
-- `type`: Supported modalities (e.g., `Text`)
-- `region`: Cloud region availability (e.g., `Global`)
-- `price_per_1m_input_lte_200k`: Rate per 1M tokens for prompts <= 200K
-- `price_per_1m_input_gt_200k`: Rate per 1M tokens for prompts > 200K
-- `price_per_1m_cached_input_lte_200k`: Rate per 1M cached prompt tokens <= 200K
-- `price_per_1m_cached_input_gt_200k`: Rate per 1M cached prompt tokens > 200K
-- `price_per_1m_output_lte_200k`: Rate per 1M output tokens <= 200K
-- `price_per_1m_output_gt_200k`: Rate per 1M output tokens > 200K
-- `rates`: standard `[uncached_input, cached_input, output]` summary
+Model rates are stored in `model_pricing.json` (located alongside `token_metrics.py`):
+```json
+{
+  "gemini-3.8-flash": {
+    "model": "Google: Gemini 3.8 Flash",
+    "rates": [0.75, 0.075, 3.75],
+    "verified_at": "2026-10-13",
+    "expires_at": null
+  }
+}
+```
+- `model`: Display name
+- `rates`: `[uncached_input, cached_input, output]` in USD per 1M tokens
 - `verified_at`: ISO date (`YYYY-MM-DD`) when verified against documentation
-- `expires_at`: ISO date (`YYYY-MM-DD`) if introductory / promotional pricing has an end date.
+- `expires_at`: ISO date (`YYYY-MM-DD`) if introductory / promotional pricing has an end date (null otherwise).
 
 ---
 
 ## Error Handling Workflow
-If `token_metrics.py` exits with an error (`[ERROR] Missing Model Pricing` or `[ERROR] Expired Model Pricing`):
+If `token_metrics.py` exits with an error (`[ERROR] Missing Model Pricing`):
 1. Check `config.json`. If missing or invalid, trigger `ask_question`.
 2. Query the chosen source to fetch and update `model_pricing.json`.
 3. Sync `model_pricing.json` to both local and `~/.gemini/antigravity-cli/skills/token-metrics/model_pricing.json`.

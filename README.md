@@ -46,17 +46,6 @@ esc to cancel                                                                   
 ╰────────────────────────── ID: a42a22e0... ──────────────────────────╯
 ```
 
-### Detailed Per-Model Breakdown (`--models`)
-```text
-                                   ⚡ Per-Model Metrics Breakdown
-╭──────────────────────────┬────────────┬────────────┬────────────┬───────────┬──────────┬───────╮
-│ Model / Tier             │       Cost │      Input │      Cache │    Output │ Hit Rate │ Turns │
-├──────────────────────────┼────────────┼────────────┼────────────┼───────────┼──────────┼───────┤
-│ Gemini 3.8 Flash (Medium)│    $0.2539 │    960,167 │  9,278,501 │   145,433 │    90.6% │    97 │
-│ Claude Sonnet 4.6 (Think)│    $0.9350 │    168,261 │  1,420,100 │    32,100 │    89.4% │     9 │
-╰──────────────────────────┴────────────┴────────────┴────────────┴───────────┴──────────┴───────╯
-```
-
 ---
 
 ## ✨ Features
@@ -74,16 +63,32 @@ esc to cancel                                                                   
 
 You can install and use `antigravity-metrics` either as a **native Antigravity Skill / Plugin** or as a **standalone CLI tool**.
 
-### Option A: Install as an Antigravity Plugin / Skill
+### Option A: Install as an Antigravity Skill (Recommended)
 
-To invoke metrics natively in your chat sessions via the `/token-metrics` slash command:
+To invoke metrics natively in your chat sessions via the `/token-metrics` slash command, run the 1-line installer:
 
-#### Linux / macOS
+#### Quick 1-Line In-Memory Install (via tar.gz)
+
+Streams directly from GitHub into memory and extracts without creating temporary archive files:
+
+**Linux / macOS:**
+```bash
+mkdir -p ~/.gemini/antigravity-cli/skills/token-metrics && curl -sSL https://github.com/GoudaCouda/antigravity-metrics/releases/latest/download/token-metrics.tar.gz | tar -xz -C ~/.gemini/antigravity-cli/skills/token-metrics
+```
+
+**Windows (PowerShell):**
+```powershell
+New-Item -ItemType Directory -Path "$HOME\.gemini\antigravity-cli\skills\token-metrics" -Force; curl.exe -sSL https://github.com/GoudaCouda/antigravity-metrics/releases/latest/download/token-metrics.tar.gz | tar.exe -xz -C "$HOME\.gemini\antigravity-cli\skills\token-metrics"
+```
+
+#### Alternative: Install via Git Clone
+
+**Linux / macOS:**
 ```bash
 git clone https://github.com/GoudaCouda/antigravity-metrics.git ~/.gemini/antigravity-cli/skills/token-metrics
 ```
 
-#### Windows (PowerShell)
+**Windows (PowerShell):**
 ```powershell
 git clone https://github.com/GoudaCouda/antigravity-metrics.git "$HOME\.gemini\antigravity-cli\skills\token-metrics"
 ```
@@ -124,7 +129,6 @@ token-metrics
 | Command | Description |
 | :--- | :--- |
 | `antigravity-metrics` | Show clean summary card for the current active conversation |
-| `antigravity-metrics --models` | Output dedicated per-model metrics breakdown table |
 | `antigravity-metrics --latest` | Inspect the most recently active session |
 | `antigravity-metrics --conv <id>` | Inspect a specific conversation by ID or UUID |
 | `antigravity-metrics --list` | List recent conversations with model, steps, and status |

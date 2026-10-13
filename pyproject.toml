@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "antigravity-metrics"
-version = "0.1.0"
+version = "0.2.0"
 description = "Real-time token telemetry, prompt cache efficiency, and multi-model cost inspector for Google Antigravity"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -18,8 +18,9 @@ dependencies = [
 ]
 
 [project.scripts]
-antigravity-metrics = "token_metrics:main"
-token-metrics = "token_metrics:main"
+antigravity-metrics = "antigravity_metrics.cli:main"
+token-metrics = "antigravity_metrics.cli:main"
 
 [tool.setuptools]
 py-modules = ["token_metrics"]
+packages = ["antigravity_metrics"]

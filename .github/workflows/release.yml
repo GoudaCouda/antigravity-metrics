@@ -1,0 +1,60 @@
+name: Build and Release Packages
+
+on:
+  release:
+    types: [published]
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies & run tests
+        run: |
+          python -m pip install --upgrade pip
+          pip install rich
+          python -m unittest discover -s tests
+
+      - name: Create Release Packages (tar.gz & zip)
+        run: |
+          mkdir -p dist/token-metrics
+          cp -r antigravity_metrics dist/token-metrics/
+          cp token_metrics.py dist/token-metrics/
+          cp model_pricing.json dist/token-metrics/
+          cp SKILL.md dist/token-metrics/
+          cp README.md dist/token-metrics/
+          cp LICENSE dist/token-metrics/
+          cd dist/token-metrics
+          tar -czf ../token-metrics.tar.gz ./*
+          zip -r ../token-metrics.zip ./*
+          cd ../..
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: token-metrics-packages
+          path: |
+            dist/token-metrics.tar.gz
+            dist/token-metrics.zip
+
+      - name: Attach Packages to GitHub Release
+        if: github.event_name == 'release' || startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/token-metrics.tar.gz
+            dist/token-metrics.zip

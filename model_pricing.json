@@ -1,14 +1,6 @@
 {
   "gemini-3.8-flash": {
     "model": "Google: Gemini 3.8 Flash",
-    "type": "Text",
-    "region": "Global",
-    "price_per_1m_input_lte_200k": 0.75,
-    "price_per_1m_input_gt_200k": 0.75,
-    "price_per_1m_cached_input_lte_200k": 0.075,
-    "price_per_1m_cached_input_gt_200k": 0.075,
-    "price_per_1m_output_lte_200k": 3.75,
-    "price_per_1m_output_gt_200k": 3.75,
     "rates": [
       0.75,
       0.075,
@@ -19,14 +11,6 @@
   },
   "claude-sonnet-4.6": {
     "model": "Anthropic: Claude Sonnet 4.6",
-    "type": "Text",
-    "region": "Global",
-    "price_per_1m_input_lte_200k": 3.0,
-    "price_per_1m_input_gt_200k": 3.0,
-    "price_per_1m_cached_input_lte_200k": 0.3,
-    "price_per_1m_cached_input_gt_200k": 0.3,
-    "price_per_1m_output_lte_200k": 15.0,
-    "price_per_1m_output_gt_200k": 15.0,
     "rates": [
       3.0,
       0.3,
@@ -37,14 +21,6 @@
   },
   "gpt-oss-120b": {
     "model": "OpenAI: gpt-oss-120b",
-    "type": "Text",
-    "region": "Global",
-    "price_per_1m_input_lte_200k": 0.15,
-    "price_per_1m_input_gt_200k": 0.15,
-    "price_per_1m_cached_input_lte_200k": 0.075,
-    "price_per_1m_cached_input_gt_200k": 0.075,
-    "price_per_1m_output_lte_200k": 0.6,
-    "price_per_1m_output_gt_200k": 0.6,
     "rates": [
       0.15,
       0.075,
@@ -55,14 +31,6 @@
   },
   "claude-opus-4.6": {
     "model": "Anthropic: Claude Opus 4.6",
-    "type": "Text",
-    "region": "Global",
-    "price_per_1m_input_lte_200k": 5.0,
-    "price_per_1m_input_gt_200k": 5.0,
-    "price_per_1m_cached_input_lte_200k": 0.5,
-    "price_per_1m_cached_input_gt_200k": 0.5,
-    "price_per_1m_output_lte_200k": 25.0,
-    "price_per_1m_output_gt_200k": 25.0,
     "rates": [
       5.0,
       0.5,
