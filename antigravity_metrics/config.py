@@ -22,12 +22,16 @@ def get_base_dirs() -> Tuple[Path, Path]:
 
 
 def get_pricing_file_path() -> Path:
-    """Finds model_pricing.json next to the project or in the global skill directory."""
+    """Finds model_pricing.json next to the project or in skill directories."""
     local_path = Path(__file__).resolve().parent.parent / "model_pricing.json"
     if local_path.exists():
         return local_path
 
     home = Path.home()
+    config_path = home / ".gemini" / "config" / "skills" / "token-metrics" / "model_pricing.json"
+    if config_path.exists():
+        return config_path
+
     global_path = home / ".gemini" / "antigravity-cli" / "skills" / "token-metrics" / "model_pricing.json"
     if global_path.exists():
         return global_path
@@ -36,12 +40,16 @@ def get_pricing_file_path() -> Path:
 
 
 def get_config_file_path() -> Path:
-    """Finds config.json next to the project or in the global skill directory."""
+    """Finds config.json next to the project or in skill directories."""
     local_path = Path(__file__).resolve().parent.parent / "config.json"
     if local_path.exists():
         return local_path
 
     home = Path.home()
+    config_path = home / ".gemini" / "config" / "skills" / "token-metrics" / "config.json"
+    if config_path.exists():
+        return config_path
+
     global_path = home / ".gemini" / "antigravity-cli" / "skills" / "token-metrics" / "config.json"
     if global_path.exists():
         return global_path
