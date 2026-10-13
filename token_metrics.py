@@ -57,6 +57,44 @@ def get_pricing_file_path() -> Path:
     return local_path
 
 
+def get_config_file_path() -> Path:
+    """Finds config.json next to this script or in the global skill directory."""
+    script_dir = Path(__file__).resolve().parent
+    local_path = script_dir / "config.json"
+    if local_path.exists():
+        return local_path
+
+    home = Path.home()
+    global_path = home / ".gemini" / "antigravity-cli" / "skills" / "token-metrics" / "config.json"
+    if global_path.exists():
+        return global_path
+
+    return local_path
+
+
+def load_user_config() -> Dict[str, Any]:
+    """Loads configuration options from config.json if present."""
+    cfg_file = get_config_file_path()
+    if cfg_file.exists():
+        try:
+            with open(cfg_file, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return {}
+
+
+def save_user_config(cfg: Dict[str, Any]):
+    """Saves user configuration to config.json."""
+    cfg_file = get_config_file_path()
+    try:
+        cfg_file.parent.mkdir(parents=True, exist_ok=True)
+        with open(cfg_file, "w", encoding="utf-8") as f:
+            json.dump(cfg, f, indent=2)
+    except Exception as e:
+        print(f"[WARN] Failed to write config to {cfg_file}: {e}", file=sys.stderr)
+
+
 class ExpiredModelPricingError(Exception):
     """Raised when a model's promotional or introductory pricing has expired."""
     def __init__(self, model_name: str, expires_at: str):
@@ -228,6 +266,23 @@ def save_model_pricing_entry(key: str, entry: Dict[str, Any]):
         print(f"[WARN] Failed to save {key} to {target_path}: {e}", file=sys.stderr)
 
 
+def sync_pricing_from_github() -> bool:
+    """Syncs model_pricing.json from the upstream GitHub repository."""
+    url = "https://raw.githubusercontent.com/GoudaCouda/antigravity-metrics/main/model_pricing.json"
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "antigravity-token-metrics/1.0"})
+        with urllib.request.urlopen(req, timeout=6) as response:
+            data = json.loads(response.read().decode("utf-8"))
+            if data and isinstance(data, dict):
+                target_path = get_pricing_file_path()
+                with open(target_path, "w", encoding="utf-8") as f:
+                    json.dump(data, f, indent=2)
+                return True
+    except Exception as e:
+        print(f"[WARN] Failed to sync pricing from GitHub: {e}", file=sys.stderr)
+    return False
+
+
 def resolve_model_rates(base_name: str) -> Tuple[str, Tuple[float, float, float], Dict[str, Any]]:
     global MODEL_PRICING_TABLE
     if not MODEL_PRICING_TABLE:
@@ -241,21 +296,38 @@ def resolve_model_rates(base_name: str) -> Tuple[str, Tuple[float, float, float]
             # Check expiration mechanic
             expires_at = info.get("expires_at")
             if expires_at and expires_at < today_str:
-                # Attempt to refresh expired pricing via OpenRouter API
-                refreshed = fetch_model_pricing_from_openrouter(base_name)
-                if refreshed:
-                    save_model_pricing_entry(key, refreshed)
-                    MODEL_PRICING_TABLE[key] = refreshed
-                    return key, refreshed["rates"], refreshed
+                cfg = load_user_config()
+                source = cfg.get("pricing_source", "openrouter").lower()
+                if source == "openrouter":
+                    refreshed = fetch_model_pricing_from_openrouter(base_name)
+                    if refreshed:
+                        save_model_pricing_entry(key, refreshed)
+                        MODEL_PRICING_TABLE[key] = refreshed
+                        return key, refreshed["rates"], refreshed
+                elif source in ("github", "git"):
+                    if sync_pricing_from_github():
+                        MODEL_PRICING_TABLE = load_model_pricing()
+                        if key in MODEL_PRICING_TABLE:
+                            return key, MODEL_PRICING_TABLE[key]["rates"], MODEL_PRICING_TABLE[key]
                 raise ExpiredModelPricingError(base_name, expires_at)
             return key, info["rates"], info
 
-    # Missing model: Attempt automatic fetch from OpenRouter
-    fetched = fetch_model_pricing_from_openrouter(base_name)
-    if fetched:
-        save_model_pricing_entry(norm, fetched)
-        MODEL_PRICING_TABLE[norm] = fetched
-        return norm, fetched["rates"], fetched
+    # Missing model: check user source preference
+    cfg = load_user_config()
+    source = cfg.get("pricing_source", "openrouter").lower()
+
+    if source == "openrouter":
+        fetched = fetch_model_pricing_from_openrouter(base_name)
+        if fetched:
+            save_model_pricing_entry(norm, fetched)
+            MODEL_PRICING_TABLE[norm] = fetched
+            return norm, fetched["rates"], fetched
+    elif source in ("github", "git"):
+        if sync_pricing_from_github():
+            MODEL_PRICING_TABLE = load_model_pricing()
+            for key, info in MODEL_PRICING_TABLE.items():
+                if key in norm or norm in key:
+                    return key, info["rates"], info
 
     raise MissingModelPricingError(base_name, norm)
 
@@ -776,6 +848,23 @@ def render_rich_list(convs: List[Tuple[str, Path, float]], app_dir: Path, brain_
     console.print()
 
 
+def prompt_pricing_source_selection():
+    """Prompts interactive CLI user to choose their pricing lookup source."""
+    print("\n⚡ Pricing lookup source not configured.")
+    print("Select preferred fallback when models are missing:")
+    print("  1) OpenRouter API (Fast JSON endpoint for real-time rates) [Default]")
+    print("  2) GitHub repository sync (fetch latest verified model_pricing.json)")
+    try:
+        choice = input("Select [1-2] (default: 1): ").strip()
+    except (EOFError, KeyboardInterrupt):
+        choice = "1"
+    
+    source = "github" if choice == "2" else "openrouter"
+    save_user_config({"pricing_source": source})
+    print(f"✓ Saved pricing lookup preference: '{source}' in config.json\n")
+    return source
+
+
 def main():
     parser = argparse.ArgumentParser(description="Antigravity Conversation Token & Cost Inspector")
     parser.add_argument("--conv", "-c", help="Conversation ID (default: active session)")
@@ -783,8 +872,24 @@ def main():
     parser.add_argument("--models", "--by-model", action="store_true", help="Show dedicated per-model metrics table")
     parser.add_argument("--list", "-l", action="store_true", help="List recent conversations")
     parser.add_argument("--json", action="store_true", help="Output raw JSON metrics")
+    parser.add_argument(
+        "--set-source",
+        choices=["openrouter", "github"],
+        help="Configure preferred pricing source fallback (openrouter or github)",
+    )
 
     args = parser.parse_args()
+
+    if args.set_source:
+        save_user_config({"pricing_source": args.set_source})
+        print(f"✓ Saved pricing lookup preference: '{args.set_source}' in config.json")
+        sys.exit(0)
+
+    # First-run check: if config is missing and running in an interactive terminal, prompt user
+    cfg = load_user_config()
+    if not cfg.get("pricing_source") and sys.stdin.isatty():
+        prompt_pricing_source_selection()
+
     app_dir, brain_dir = get_base_dirs()
     convs = find_conversations(brain_dir)
 

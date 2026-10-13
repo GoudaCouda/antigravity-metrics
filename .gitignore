@@ -32,5 +32,6 @@ env/
 *.swp
 *.swo
 *~
-.DS_Store
-Thumbs.db
+# User Local Configurations
+config.json
+pricing_config.json
