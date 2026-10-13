@@ -528,17 +528,21 @@ def render_clean_card(data: Dict[str, Any]):
         main.add_row(Rule(style="dim"))
         main.add_row(Text("BREAKDOWN BY MODEL", style="bold dim"))
         mb_table = Table(box=None, show_header=False, padding=(0, 1), expand=True)
-        mb_table.add_column("Model", style="bold yellow", no_wrap=True)
-        mb_table.add_column("Cost", justify="right", style="bold green")
-        mb_table.add_column("Stats", justify="right", style="dim", no_wrap=True)
+        mb_table.add_column("Model", style="bold yellow", min_width=29, no_wrap=True)
+        mb_table.add_column("Cost", justify="right", style="bold green", min_width=9, no_wrap=True)
+        mb_table.add_column("Turns", justify="right", style="dim white", min_width=11, no_wrap=True)
+        mb_table.add_column("Tokens", justify="right", style="dim", min_width=16, no_wrap=True)
         for mk, mb in model_breakdown.items():
             mb_cost_str = f"${mb['estimated_cost_usd']:.4f}" if mb['estimated_cost_usd'] < 1.0 else f"${mb['estimated_cost_usd']:.2f}"
             mb_table.add_row(
                 f"• {mk}",
                 mb_cost_str,
-                f"{mb['turns']} turns · {mb['total_tokens']:,} tok",
+                f"{mb['turns']} turns",
+                f"· {mb['total_tokens']:,} tok",
             )
         main.add_row(mb_table)
+
+
 
     # 4. Activity section
     u_in = sc.get("USER_INPUT", 0)
