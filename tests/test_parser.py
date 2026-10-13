@@ -88,6 +88,27 @@ class TestParser(unittest.TestCase):
         total_cost = fm["estimated_cost_usd"]
         self.assertAlmostEqual(total_cost, 0.11625 + 0.27, places=5)
 
+    def test_get_current_conversation_id(self):
+        import os
+        from unittest.mock import patch
+        from antigravity_metrics.parser import get_current_conversation_id
+
+        # 1. With ANTIGRAVITY_CONVERSATION_ID set
+        session_id = "test-session-1234"
+        session_dir = Path(self.temp_dir.name) / session_id
+        session_dir.mkdir(parents=True, exist_ok=True)
+        (session_dir / ".system_generated" / "logs").mkdir(parents=True, exist_ok=True)
+        (session_dir / ".system_generated" / "logs" / "transcript.jsonl").write_text("{}")
+
+        with patch.dict(os.environ, {"ANTIGRAVITY_CONVERSATION_ID": session_id}):
+            resolved = get_current_conversation_id(Path(self.temp_dir.name))
+            self.assertEqual(resolved, session_id)
+
+        # 2. Without env var, falls back to directory
+        with patch.dict(os.environ, {}, clear=True):
+            resolved = get_current_conversation_id(Path(self.temp_dir.name))
+            self.assertEqual(resolved, session_id)
+
 
 if __name__ == "__main__":
     unittest.main()

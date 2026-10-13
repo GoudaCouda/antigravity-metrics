@@ -1,6 +1,7 @@
 """Single-pass Antigravity transcript parser and session resolver."""
 
 import json
+import os
 import re
 import sqlite3
 from pathlib import Path
@@ -69,26 +70,15 @@ def find_conversations(brain_dir: Path) -> List[Tuple[str, Path, float]]:
     return convs
 
 
-def get_active_or_latest_conversation(app_dir: Path, brain_dir: Path) -> Optional[str]:
-    """Finds currently running or most recently modified conversation."""
-    db_path = app_dir / "conversation_summaries.db"
-    if db_path.exists():
-        try:
-            conn = sqlite3.connect(db_path)
-            cur = conn.cursor()
-            cur.execute(
-                """
-                SELECT conversation_id FROM conversation_summaries
-                ORDER BY (status = 'CASCADE_RUN_STATUS_RUNNING') DESC, last_modified_time DESC
-                LIMIT 1
-                """
-            )
-            row = cur.fetchone()
-            conn.close()
-            if row and (brain_dir / row[0]).exists():
-                return row[0]
-        except Exception:
-            pass
+def get_current_conversation_id(brain_dir: Path) -> Optional[str]:
+    """
+    Resolves the conversation ID for the current session.
+    Prioritizes ANTIGRAVITY_CONVERSATION_ID from the environment,
+    falling back to the most recent conversation directory.
+    """
+    env_id = os.environ.get("ANTIGRAVITY_CONVERSATION_ID")
+    if env_id and (brain_dir / env_id).exists():
+        return env_id
 
     convs = find_conversations(brain_dir)
     return convs[0][0] if convs else None

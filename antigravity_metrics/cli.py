@@ -6,7 +6,7 @@ import sys
 from .config import get_base_dirs, save_user_config
 from .parser import (
     find_conversations,
-    get_active_or_latest_conversation,
+    get_current_conversation_id,
     parse_conversation,
 )
 from .pricing import MissingModelPricingError
@@ -51,7 +51,7 @@ def main() -> None:
     elif args.latest:
         target_id = convs[0][0] if convs else None
     else:
-        target_id = get_active_or_latest_conversation(app_dir, brain_dir)
+        target_id = get_current_conversation_id(brain_dir)
 
     if not target_id or not (brain_dir / target_id).exists():
         print(f"Error: Conversation directory not found in {brain_dir}", file=sys.stderr)
