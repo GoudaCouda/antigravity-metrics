@@ -67,7 +67,7 @@ You can install and use `antigravity-metrics` either as a **native Antigravity S
 
 To invoke metrics natively in your chat sessions via the `/token-metrics` slash command, run the 1-line installer:
 
-#### Quick 1-Line In-Memory Install (via tar.gz)
+#### Quick 1-Line Install to default Antigravity Location
 
 Streams directly from GitHub into memory and extracts without creating temporary archive files:
 
