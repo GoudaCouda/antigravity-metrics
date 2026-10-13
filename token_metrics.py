@@ -89,9 +89,28 @@ def get_pricing_file_path() -> Path:
     return local_path
 
 
-def load_model_pricing() -> Dict[str, Tuple[float, float, float]]:
-    """Loads model pricing from model_pricing.json supporting flat arrays or dicts with verified_at."""
-    table = dict(DEFAULT_MODEL_PRICING)
+class ExpiredModelPricingError(Exception):
+    """Raised when a model's promotional or introductory pricing has expired."""
+    def __init__(self, model_name: str, expires_at: str):
+        self.model_name = model_name
+        self.expires_at = expires_at
+        super().__init__(
+            f"Pricing for model '{model_name}' expired on {expires_at}.\n"
+            f"Please check the official Google Vertex AI pricing page to update standard rates in model_pricing.json:\n"
+            f"  https://cloud.google.com/gemini-enterprise-agent-platform/generative-ai/pricing?hl=en#googlemodels"
+        )
+
+
+def load_model_pricing() -> Dict[str, Dict[str, Any]]:
+    """Loads model pricing from model_pricing.json supporting Vertex AI tiered format, flat arrays, and expirations."""
+    table: Dict[str, Dict[str, Any]] = {}
+    for k, v in DEFAULT_MODEL_PRICING.items():
+        table[k] = {
+            "rates": v,
+            "verified_at": None,
+            "expires_at": None,
+        }
+
     p_file = get_pricing_file_path()
     if p_file.exists():
         try:
@@ -99,25 +118,43 @@ def load_model_pricing() -> Dict[str, Tuple[float, float, float]]:
                 data = json.load(f)
                 for k, v in data.items():
                     if isinstance(v, (list, tuple)) and len(v) == 3:
-                        table[k] = (float(v[0]), float(v[1]), float(v[2]))
+                        table[k] = {
+                            "rates": (float(v[0]), float(v[1]), float(v[2])),
+                            "verified_at": None,
+                            "expires_at": None,
+                        }
                     elif isinstance(v, dict):
-                        # Support object format: {"rates": [in, cache, out], "verified_at": "..."}
+                        # Extract rates: either explicit rates list or derived from Vertex tiered fields
                         rates = v.get("rates")
-                        if isinstance(rates, (list, tuple)) and len(rates) == 3:
-                            table[k] = (float(rates[0]), float(rates[1]), float(rates[2]))
-                        elif "intervals" in v and isinstance(v["intervals"], list) and v["intervals"]:
-                            latest_interval = v["intervals"][-1]
-                            int_rates = latest_interval.get("rates")
-                            if isinstance(int_rates, (list, tuple)) and len(int_rates) == 3:
-                                table[k] = (float(int_rates[0]), float(int_rates[1]), float(int_rates[2]))
+                        if not rates or not isinstance(rates, (list, tuple)) or len(rates) != 3:
+                            p_in = v.get("price_per_1m_input_lte_200k", 0.0)
+                            p_cache = v.get("price_per_1m_cached_input_lte_200k", 0.0)
+                            p_out = v.get("price_per_1m_output_lte_200k", 0.0)
+                            rates = (float(p_in), float(p_cache), float(p_out))
+                        else:
+                            rates = (float(rates[0]), float(rates[1]), float(rates[2]))
+
+                        table[k] = {
+                            "model": v.get("model", k),
+                            "type": v.get("type", "Text"),
+                            "region": v.get("region", "Global"),
+                            "price_per_1m_input_lte_200k": v.get("price_per_1m_input_lte_200k"),
+                            "price_per_1m_input_gt_200k": v.get("price_per_1m_input_gt_200k"),
+                            "price_per_1m_cached_input_lte_200k": v.get("price_per_1m_cached_input_lte_200k"),
+                            "price_per_1m_cached_input_gt_200k": v.get("price_per_1m_cached_input_gt_200k"),
+                            "price_per_1m_output_lte_200k": v.get("price_per_1m_output_lte_200k"),
+                            "price_per_1m_output_gt_200k": v.get("price_per_1m_output_gt_200k"),
+                            "rates": rates,
+                            "verified_at": v.get("verified_at"),
+                            "expires_at": v.get("expires_at"),
+                        }
         except Exception:
             pass
     return table
 
 
-
 # Load runtime table
-MODEL_PRICING_TABLE: Dict[str, Tuple[float, float, float]] = load_model_pricing()
+MODEL_PRICING_TABLE: Dict[str, Dict[str, Any]] = load_model_pricing()
 
 
 class MissingModelPricingError(Exception):
@@ -127,8 +164,9 @@ class MissingModelPricingError(Exception):
         self.normalized_name = normalized_name
         super().__init__(
             f"Pricing not found for model '{model_name}' (normalized: '{normalized_name}') in model_pricing.json.\n"
-            f"Please look up official pricing and add it to model_pricing.json:\n"
-            f'  "{normalized_name}": [uncached_prompt_per_1m, cached_prompt_per_1m, output_per_1m]'
+            f"Please look up official pricing from Vertex AI:\n"
+            f"  https://cloud.google.com/gemini-enterprise-agent-platform/generative-ai/pricing?hl=en#googlemodels\n"
+            f"and add the model with its rates and optional expiration date."
         )
 
 
@@ -147,17 +185,24 @@ def parse_model_string(raw: str) -> Tuple[str, str]:
     return raw, ""
 
 
-def resolve_model_rates(base_name: str) -> Tuple[str, Tuple[float, float, float]]:
+def resolve_model_rates(base_name: str) -> Tuple[str, Tuple[float, float, float], Dict[str, Any]]:
     global MODEL_PRICING_TABLE
     if not MODEL_PRICING_TABLE:
         MODEL_PRICING_TABLE = load_model_pricing()
 
     norm = base_name.lower().replace(" ", "-").replace("_", "-")
-    for key, rates in MODEL_PRICING_TABLE.items():
+    today_str = datetime.now().strftime("%Y-%m-%d")
+
+    for key, info in MODEL_PRICING_TABLE.items():
         if key in norm or norm in key:
-            return key, rates
+            # Check expiration mechanic
+            expires_at = info.get("expires_at")
+            if expires_at and expires_at < today_str:
+                raise ExpiredModelPricingError(base_name, expires_at)
+            return key, info["rates"], info
 
     raise MissingModelPricingError(base_name, norm)
+
 
 
 
@@ -359,7 +404,7 @@ def parse_conversation(conv_id: str, conv_dir: Path, app_dir: Path, brain_dir: P
 
             if stype == "PLANNER_RESPONSE":
                 base, effort = parse_model_string(current_model_str)
-                canonical_key, rates = resolve_model_rates(base)
+                canonical_key, rates, info = resolve_model_rates(base)
                 p_in, p_cache, p_out = rates
 
                 step_cost = (
@@ -382,6 +427,7 @@ def parse_conversation(conv_id: str, conv_dir: Path, app_dir: Path, brain_dir: P
                         "name": base,
                         "effort": effort,
                         "canonical_key": canonical_key,
+                        "pricing_info": info,
                         "input_tokens": 0,
                         "cache_read_tokens": 0,
                         "output_tokens": 0,
@@ -417,7 +463,8 @@ def parse_conversation(conv_id: str, conv_dir: Path, app_dir: Path, brain_dir: P
     savings_pct = (cache_savings / total_baseline_cost * 100.0) if total_baseline_cost > 0 else 0.0
 
     active_base, active_effort = parse_model_string(current_model_str)
-    active_canonical, _ = resolve_model_rates(active_base)
+    active_canonical, _, _ = resolve_model_rates(active_base)
+
 
     return {
         "conversation_id": conv_id,
@@ -709,6 +756,9 @@ def main():
     target_dir = brain_dir / target_id
     try:
         data = parse_conversation(target_id, target_dir, app_dir, brain_dir)
+    except ExpiredModelPricingError as e:
+        print(f"\n[ERROR] Expired Model Pricing: {e}\n", file=sys.stderr)
+        sys.exit(3)
     except MissingModelPricingError as e:
         print(f"\n[ERROR] Missing Model Pricing: {e}\n", file=sys.stderr)
         sys.exit(2)
