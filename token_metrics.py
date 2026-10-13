@@ -638,6 +638,7 @@ def render_clean_card(data: Dict[str, Any]):
     model_breakdown = data.get("model_breakdown", {})
 
     cid = data.get("conversation_id", "")
+    convo_title = data.get("title", "Active Session").strip()
     cost = fm.get("estimated_cost_usd", 0.0)
     savings = fm.get("cache_savings_usd", 0.0)
     savings_pct = fm.get("savings_discount_pct", 0.0)
@@ -760,10 +761,12 @@ def render_clean_card(data: Dict[str, Any]):
     act_grid.add_row(left_act, right_act)
     main.add_row(act_grid)
 
+    # Format conversation title for subtitle (truncate cleanly if very long)
+    display_title = convo_title if len(convo_title) <= 45 else f"{convo_title[:42]}..."
     panel = Panel(
         main,
         title="[bold cyan]⚡ Token & Cost Summary[/bold cyan]",
-        subtitle=f"[dim]ID: {cid[:8]}...[/dim]",
+        subtitle=f"[dim]{display_title}[/dim]",
         box=box.ROUNDED,
         border_style="cyan",
         padding=(1, 2),
