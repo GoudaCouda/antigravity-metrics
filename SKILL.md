@@ -41,19 +41,19 @@ Once selected, save the choice in a lightweight configuration file (`pricing_con
 
 ## Price Retrieval Workflows by Source
 
-### Option 1: OpenRouter API Query (Fast & Structured)
-Query OpenRouter's public models endpoint filtered by author, model query, and provider:
+### Option 1: OpenRouter API Query (Bake directly into script or query)
+`token_metrics.py` now bakes this fetcher directly in. It queries OpenRouter without author restrictions (supporting models from Google, Anthropic, OpenAI, Meta, etc.):
 ```
-https://openrouter.ai/api/v1/models?model_authors=google&q=<MODEL_NAME>&output_modalities=text&providers=google-vertex
+https://openrouter.ai/api/v1/models?q=<MODEL_NAME>&output_modalities=text
 ```
 For example, for `Gemini 3.8 Flash`:
-`https://openrouter.ai/api/v1/models?model_authors=google&q=Gemini%203.8%20Flash&output_modalities=text&providers=google-vertex`
+`https://openrouter.ai/api/v1/models?q=Gemini%203.8%20Flash&output_modalities=text`
 
-From the returned JSON, extract only the values we care about into `model_pricing.json`:
-- `input_cost_per_token`: `pricing.prompt` (convert to per-1M: `float(prompt) * 1_000_000`)
-- `cached_cost_per_token`: `pricing.input_cache_read` (convert to per-1M: `float(input_cache_read) * 1_000_000`)
-- `output_cost_per_token`: `pricing.completion` (convert to per-1M: `float(completion) * 1_000_000`)
-- Format into the schema in `model_pricing.json`.
+From the returned JSON, only the necessary rate fields are extracted and converted to per-1M tokens:
+- `price_per_1m_input`: `pricing.prompt * 1_000_000`
+- `price_per_1m_cached`: `pricing.input_cache_read * 1_000_000`
+- `price_per_1m_output`: `pricing.completion * 1_000_000`
+- Persisted automatically to `model_pricing.json`.
 
 ### Option 2: Auto-sync via GitHub (`git pull` / fetch)
 Fetch or pull the latest maintained `model_pricing.json` directly from the repository:
