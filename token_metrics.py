@@ -16,8 +16,6 @@ import os
 import re
 import sqlite3
 import sys
-import urllib.parse
-import urllib.request
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -40,40 +38,6 @@ try:
     RICH_AVAILABLE = True
 except ImportError:
     RICH_AVAILABLE = False
-
-
-# Default Model Pricing Rates per 1M tokens: (uncached_prompt, cached_prompt, output_generation)
-DEFAULT_MODEL_PRICING: Dict[str, Tuple[float, float, float]] = {
-    # Gemini Flash Tier ($0.075 / $0.01875 / $0.300 per 1M)
-    "gemini-3.8-flash": (0.075, 0.01875, 0.30),
-    "gemini-3.7-flash": (0.075, 0.01875, 0.30),
-    "gemini-3.5-flash": (0.075, 0.01875, 0.30),
-    "gemini-2.5-flash": (0.075, 0.01875, 0.30),
-    "gemini-1.5-flash": (0.075, 0.01875, 0.30),
-
-    # Gemini Pro Tier ($1.25 / $0.3125 / $5.00 per 1M)
-    "gemini-3.8-pro": (1.25, 0.3125, 5.00),
-    "gemini-3.1-pro": (1.25, 0.3125, 5.00),
-    "gemini-2.5-pro": (1.25, 0.3125, 5.00),
-    "gemini-1.5-pro": (1.25, 0.3125, 5.00),
-
-    # Anthropic Claude Tier
-    "claude-sonnet-4.6": (3.00, 0.30, 15.00),
-    "claude-3.7-sonnet": (3.00, 0.30, 15.00),
-    "claude-3.5-sonnet": (3.00, 0.30, 15.00),
-    "claude-3.5-haiku": (0.80, 0.08, 4.00),
-    "claude-3-opus": (15.00, 1.50, 75.00),
-
-    # OpenAI Tier
-    "gpt-4o": (2.50, 1.25, 10.00),
-    "gpt-4o-mini": (0.15, 0.075, 0.60),
-    "gpt-oss-120b": (0.15, 0.0375, 0.60),
-    "o3-mini": (1.10, 0.55, 4.40),
-    "o1": (15.00, 7.50, 60.00),
-
-    # Default fallback
-    "default": (0.075, 0.01875, 0.30),
-}
 
 
 def get_pricing_file_path() -> Path:
@@ -106,12 +70,6 @@ class ExpiredModelPricingError(Exception):
 def load_model_pricing() -> Dict[str, Dict[str, Any]]:
     """Loads model pricing from model_pricing.json supporting Vertex AI tiered format, flat arrays, and expirations."""
     table: Dict[str, Dict[str, Any]] = {}
-    for k, v in DEFAULT_MODEL_PRICING.items():
-        table[k] = {
-            "rates": v,
-            "verified_at": None,
-            "expires_at": None,
-        }
 
     p_file = get_pricing_file_path()
     if p_file.exists():
@@ -187,95 +145,6 @@ def parse_model_string(raw: str) -> Tuple[str, str]:
     return raw, ""
 
 
-def fetch_model_pricing_from_openrouter(model_name: str) -> Optional[Dict[str, Any]]:
-    """Fetches model pricing from OpenRouter API without author restriction."""
-    try:
-        q = urllib.parse.quote(model_name)
-        url = f"https://openrouter.ai/api/v1/models?q={q}&output_modalities=text"
-        req = urllib.request.Request(url, headers={"User-Agent": "antigravity-token-metrics/1.0"})
-        with urllib.request.urlopen(req, timeout=6) as response:
-            payload = json.loads(response.read().decode("utf-8"))
-            data = payload.get("data", [])
-            if not data:
-                return None
-
-            # Find best match (avoid :batch models if standard is available)
-            best_match = None
-            for item in data:
-                if not item.get("id", "").endswith(":batch"):
-                    best_match = item
-                    break
-            if not best_match:
-                best_match = data[0]
-
-            pricing = best_match.get("pricing", {})
-            prompt_cost = float(pricing.get("prompt", 0.0))
-            completion_cost = float(pricing.get("completion", 0.0))
-            cache_read_cost = float(pricing.get("input_cache_read", 0.0) or pricing.get("input_audio_cache", 0.0) or 0.0)
-
-            # Convert per-token costs to per-1M tokens
-            price_per_1m_input = round(prompt_cost * 1_000_000, 4)
-            price_per_1m_output = round(completion_cost * 1_000_000, 4)
-            price_per_1m_cached = round(cache_read_cost * 1_000_000, 4) if cache_read_cost > 0 else round(price_per_1m_input * 0.10, 4)
-
-            entry = {
-                "model": best_match.get("name", model_name),
-                "type": "Text",
-                "region": "Global",
-                "price_per_1m_input_lte_200k": price_per_1m_input,
-                "price_per_1m_input_gt_200k": price_per_1m_input,
-                "price_per_1m_cached_input_lte_200k": price_per_1m_cached,
-                "price_per_1m_cached_input_gt_200k": price_per_1m_cached,
-                "price_per_1m_output_lte_200k": price_per_1m_output,
-                "price_per_1m_output_gt_200k": price_per_1m_output,
-                "rates": (price_per_1m_input, price_per_1m_cached, price_per_1m_output),
-                "verified_at": datetime.now().strftime("%Y-%m-%d"),
-                "expires_at": None,
-            }
-            return entry
-    except Exception:
-        return None
-
-
-def save_model_pricing_entry(key: str, entry: Dict[str, Any]):
-    """Persists fetched pricing to model_pricing.json (both local and global)."""
-    paths = [get_pricing_file_path()]
-    home = Path.home()
-    global_path = home / ".gemini" / "antigravity-cli" / "skills" / "token-metrics" / "model_pricing.json"
-    if global_path not in paths:
-        paths.append(global_path)
-
-    for p in paths:
-        try:
-            current_data = {}
-            if p.exists():
-                with open(p, "r", encoding="utf-8") as f:
-                    current_data = json.load(f)
-            
-            # Serialize cleanly adhering to schema
-            rates_list = [float(entry["rates"][0]), float(entry["rates"][1]), float(entry["rates"][2])]
-            save_obj = {
-                "model": entry.get("model", key),
-                "type": entry.get("type", "Text"),
-                "region": entry.get("region", "Global"),
-                "price_per_1m_input_lte_200k": entry.get("price_per_1m_input_lte_200k"),
-                "price_per_1m_input_gt_200k": entry.get("price_per_1m_input_gt_200k"),
-                "price_per_1m_cached_input_lte_200k": entry.get("price_per_1m_cached_input_lte_200k"),
-                "price_per_1m_cached_input_gt_200k": entry.get("price_per_1m_cached_input_gt_200k"),
-                "price_per_1m_output_lte_200k": entry.get("price_per_1m_output_lte_200k"),
-                "price_per_1m_output_gt_200k": entry.get("price_per_1m_output_gt_200k"),
-                "rates": rates_list,
-                "verified_at": entry.get("verified_at"),
-                "expires_at": entry.get("expires_at"),
-            }
-            current_data[key] = save_obj
-            p.parent.mkdir(parents=True, exist_ok=True)
-            with open(p, "w", encoding="utf-8") as f:
-                json.dump(current_data, f, indent=2)
-        except Exception:
-            pass
-
-
 def resolve_model_rates(base_name: str) -> Tuple[str, Tuple[float, float, float], Dict[str, Any]]:
     global MODEL_PRICING_TABLE
     if not MODEL_PRICING_TABLE:
@@ -289,21 +158,8 @@ def resolve_model_rates(base_name: str) -> Tuple[str, Tuple[float, float, float]
             # Check expiration mechanic
             expires_at = info.get("expires_at")
             if expires_at and expires_at < today_str:
-                # Attempt to refresh expired pricing via OpenRouter API
-                refreshed = fetch_model_pricing_from_openrouter(base_name)
-                if refreshed:
-                    save_model_pricing_entry(key, refreshed)
-                    MODEL_PRICING_TABLE[key] = refreshed
-                    return key, refreshed["rates"], refreshed
                 raise ExpiredModelPricingError(base_name, expires_at)
             return key, info["rates"], info
-
-    # Missing model: Attempt automatic fetch from OpenRouter
-    fetched = fetch_model_pricing_from_openrouter(base_name)
-    if fetched:
-        save_model_pricing_entry(norm, fetched)
-        MODEL_PRICING_TABLE[norm] = fetched
-        return norm, fetched["rates"], fetched
 
     raise MissingModelPricingError(base_name, norm)
 
