@@ -7,64 +7,96 @@ description: Analyze conversation token consumption, prompt cache hit rate, and 
 
 Inspects real-time token consumption, prompt cache efficiency, and model pricing estimates for Antigravity conversations. Automatically tracks and breaks down metrics by specific model when models are switched during a session.
 
-## CLI Execution Rules
-Always run the command cleanly without extra flags:
+## CLI Usage
+Run the standalone script from any working directory:
 ```bash
 python ~/.gemini/antigravity-cli/skills/token-metrics/token_metrics.py
 ```
+
 > [!IMPORTANT]
-> **DO NOT** pass `--models` when running the command. The default view already provides the complete summary card and cleanly embeds the model breakdown when multiple models are used.
+> **Default Execution**: Always run `python ~/.gemini/antigravity-cli/skills/token-metrics/token_metrics.py` directly without `--models` or other extra flags. The summary card automatically displays the model breakdown whenever multiple models are used. Do **NOT** run `--models`.
 
-## Configuration & Price Lookup Source Preference
-The skill maintains a user preference in `config.json` (alongside `token_metrics.py`).
-If `config.json` does not exist or has not selected a preferred lookup source, the agent should use `ask_question` on first setup to ask how the user prefers missing or expired model prices to be resolved:
+## Command Line Options
+- `python ~/.gemini/antigravity-cli/skills/token-metrics/token_metrics.py` : Clean TUI summary card for active conversation (default)
+- `python ~/.gemini/antigravity-cli/skills/token-metrics/token_metrics.py --latest` : Analyze latest active conversation
+- `python ~/.gemini/antigravity-cli/skills/token-metrics/token_metrics.py --conv <id>` : Analyze a specific conversation by ID
+- `python ~/.gemini/antigravity-cli/skills/token-metrics/token_metrics.py --list` : List recent conversations
+- `python ~/.gemini/antigravity-cli/skills/token-metrics/token_metrics.py --json` : Output raw JSON metrics
 
-1. **OpenRouter API (Fast JSON - Recommended)**
-   - Query endpoint:
-     `https://openrouter.ai/api/v1/models?model_authors=google&q=<model_name>&output_modalities=text&providers=google-vertex`
-   - Maps `pricing.prompt` * 1M, `pricing.input_cache_read` * 1M, `pricing.completion` * 1M directly into our clean schema.
-2. **Auto-sync via Git / GitHub Repository**
-   - Fetches latest curated `model_pricing.json` directly from `https://raw.githubusercontent.com/GoudaCouda/antigravity-metrics/main/model_pricing.json` (or runs `git pull`).
-3. **Google Vertex AI Documentation (Authoritative Web Scraping)**
-   - Prioritizes `https://cloud.google.com/gemini-enterprise-agent-platform/generative-ai/pricing?hl=en#googlemodels`.
+---
 
-Save the chosen preference into `config.json`:
-```json
-{
-  "pricing_source": "openrouter" // or "github", "vertex"
-}
+## Initial Setup & User Pricing Source Preference
+
+Whenever token metrics is run for the first time in an environment (or when no pricing source preference has been configured yet), the agent **MUST** prompt the user using the `ask_question` tool:
+
+- **Question**: "How would you like to retrieve model pricing data when models are missing or pricing updates are needed?"
+- **Options**:
+  1. `(Recommended) Query OpenRouter API (Fast JSON endpoint for real-time rates)`
+  2. `Auto-sync via GitHub repository (git pull / fetch latest verified model_pricing.json)`
+  3. `Scrape official Google Vertex AI documentation (Authoritative, but slow to query)`
+
+Once selected, save the choice in a lightweight configuration file (`pricing_config.json`) alongside `token_metrics.py`.
+
+---
+
+## Price Retrieval Workflows by Source
+
+### Option 1: OpenRouter API Query (Fast & Structured)
+Query OpenRouter's public models endpoint filtered by author, model query, and provider:
 ```
+https://openrouter.ai/api/v1/models?model_authors=google&q=<MODEL_NAME>&output_modalities=text&providers=google-vertex
+```
+For example, for `Gemini 3.8 Flash`:
+`https://openrouter.ai/api/v1/models?model_authors=google&q=Gemini%203.8%20Flash&output_modalities=text&providers=google-vertex`
+
+From the returned JSON, extract only the values we care about into `model_pricing.json`:
+- `input_cost_per_token`: `pricing.prompt` (convert to per-1M: `float(prompt) * 1_000_000`)
+- `cached_cost_per_token`: `pricing.input_cache_read` (convert to per-1M: `float(input_cache_read) * 1_000_000`)
+- `output_cost_per_token`: `pricing.completion` (convert to per-1M: `float(completion) * 1_000_000`)
+- Format into the schema in `model_pricing.json`.
+
+### Option 2: Auto-sync via GitHub (`git pull` / fetch)
+Fetch or pull the latest maintained `model_pricing.json` directly from the repository:
+```bash
+git -C <repo_dir> pull origin main
+```
+Or download the latest verified raw JSON from:
+`https://raw.githubusercontent.com/GoudaCouda/antigravity-metrics/main/model_pricing.json`
+and update local `model_pricing.json`.
+
+### Option 3: Google Vertex AI Docs (Official Documentation)
+Endpoint:
+`https://cloud.google.com/gemini-enterprise-agent-platform/generative-ai/pricing?hl=en#googlemodels`
+Parse the table for the requested model name, noting any introductory period dates.
+
+---
 
 ## Model Pricing Schema & Expiration Mechanic
+
 Model rates are stored strictly in `model_pricing.json` (located alongside `token_metrics.py`).
-Each entry follows the clean Vertex AI schema:
+Each entry follows the Google Vertex AI Generative AI schema options:
 - `model`: Model name (e.g., `Gemini 3.8 Flash`)
-- `type`: Modalities (e.g., `Text, Image, Video, Audio`)
-- `region`: Cloud region (e.g., `Global`)
+- `type`: Supported modalities (e.g., `Text, Image, Video, Audio`)
+- `region`: Cloud region availability (e.g., `Global` or `Non-global`)
 - `price_per_1m_input_lte_200k`: Rate per 1M tokens for prompts <= 200K
 - `price_per_1m_input_gt_200k`: Rate per 1M tokens for prompts > 200K
 - `price_per_1m_cached_input_lte_200k`: Rate per 1M cached prompt tokens <= 200K
 - `price_per_1m_cached_input_gt_200k`: Rate per 1M cached prompt tokens > 200K
 - `price_per_1m_output_lte_200k`: Rate per 1M output tokens <= 200K
 - `price_per_1m_output_gt_200k`: Rate per 1M output tokens > 200K
-- `rates`: `[uncached_input, cached_input, output]`
-- `verified_at`: ISO date (`YYYY-MM-DD`)
-- `expires_at`: ISO date (`YYYY-MM-DD`) if introductory / promotional pricing has an end date
+- `rates`: standard `[uncached_input, cached_input, output]` summary
+- `verified_at`: ISO date (`YYYY-MM-DD`) when verified against documentation
+- `expires_at`: ISO date (`YYYY-MM-DD`) if introductory / promotional pricing has an end date (e.g., `Gemini 3.8 Flash* through December 31, 2026` -> `"2026-12-31"`).
 
-### Handling Missing or Expired Models:
-When `token_metrics.py` fails with `[ERROR] Missing Model Pricing` or `[ERROR] Expired Model Pricing`:
-1. Check `config.json` for preferred `pricing_source`:
-   - If `openrouter`:
-     Query `https://openrouter.ai/api/v1/models?model_authors=google&q=<model_name>&output_modalities=text&providers=google-vertex` (or remove providers filter if non-Google).
-     Extract prompt, input_cache_read, completion rates per 1M tokens.
-   - If `github`:
-     Fetch updated `model_pricing.json` from the upstream GitHub repo.
-   - If `vertex`:
-     Inspect `https://cloud.google.com/gemini-enterprise-agent-platform/generative-ai/pricing?hl=en#googlemodels`.
-2. Save the extracted fields into `model_pricing.json` (both locally and in `~/.gemini/antigravity-cli/skills/token-metrics/model_pricing.json`).
-3. Re-run `token_metrics.py` without extra flags.
+---
 
-
-
-
-
+## Workflow When Encountering Missing or Expired Models
+If `token_metrics.py` fails with `[ERROR] Missing Model Pricing` (exit code 2) or `[ERROR] Expired Model Pricing` (exit code 3):
+1. Do **NOT** invent or guess the price.
+2. Read `pricing_config.json` to check the user's preferred source (or ask with `ask_question` if not yet configured).
+3. Query the selected source:
+   - If OpenRouter: query endpoint, extract prompt/cache/completion per-1M values, and write to `model_pricing.json`.
+   - If GitHub sync: run `git pull` or fetch `raw.githubusercontent.com/.../model_pricing.json`.
+   - If Vertex docs: read the official Vertex pricing URL.
+4. Save the entry to `model_pricing.json` (both in the repo and in `~/.gemini/antigravity-cli/skills/token-metrics/model_pricing.json`).
+5. Re-run `token_metrics.py` without extra flags.
