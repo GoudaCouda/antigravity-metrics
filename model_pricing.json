@@ -1,7 +1,7 @@
 {
   "gemini-3.8-flash": {
-    "model": "Gemini 3.8 Flash",
-    "type": "Text, Image, Video, Audio",
+    "model": "Google: Gemini 3.8 Flash",
+    "type": "Text",
     "region": "Global",
     "price_per_1m_input_lte_200k": 0.75,
     "price_per_1m_input_gt_200k": 0.75,
@@ -15,268 +15,29 @@
       3.75
     ],
     "verified_at": "2026-10-13",
-    "expires_at": "2026-12-31"
-  },
-  "gemini-3.7-flash": {
-    "model": "Gemini 3.7 Flash",
-    "type": "Text, Image, Video, Audio",
-    "region": "Global",
-    "price_per_1m_input_lte_200k": 0.75,
-    "price_per_1m_input_gt_200k": 0.75,
-    "price_per_1m_cached_input_lte_200k": 0.075,
-    "price_per_1m_cached_input_gt_200k": 0.075,
-    "price_per_1m_output_lte_200k": 3.75,
-    "price_per_1m_output_gt_200k": 3.75,
-    "rates": [
-      0.75,
-      0.075,
-      3.75
-    ],
-    "verified_at": "2026-10-13",
-    "expires_at": "2026-12-31"
-  },
-  "gemini-3.6-flash": {
-    "model": "Gemini 3.6 Flash",
-    "type": "Text, Image, Video, Audio",
-    "region": "Global",
-    "price_per_1m_input_lte_200k": 0.75,
-    "price_per_1m_input_gt_200k": 0.75,
-    "price_per_1m_cached_input_lte_200k": 0.075,
-    "price_per_1m_cached_input_gt_200k": 0.075,
-    "price_per_1m_output_lte_200k": 3.75,
-    "price_per_1m_output_gt_200k": 3.75,
-    "rates": [
-      0.75,
-      0.075,
-      3.75
-    ],
-    "verified_at": "2026-10-13",
-    "expires_at": "2026-12-31"
-  },
-  "gemini-3.5-flash": {
-    "model": "Gemini 3.5 Flash",
-    "type": "Text, Image, Video, Audio",
-    "region": "Global",
-    "price_per_1m_input_lte_200k": 1.5,
-    "price_per_1m_input_gt_200k": 1.5,
-    "price_per_1m_cached_input_lte_200k": 0.15,
-    "price_per_1m_cached_input_gt_200k": 0.15,
-    "price_per_1m_output_lte_200k": 7.5,
-    "price_per_1m_output_gt_200k": 7.5,
-    "rates": [
-      1.5,
-      0.15,
-      7.5
-    ],
-    "verified_at": "2026-10-13"
-  },
-  "gemini-3.1-pro": {
-    "model": "Gemini 3.1 Pro Preview",
-    "type": "Text, Image, Video, Audio",
-    "region": "Global",
-    "price_per_1m_input_lte_200k": 2.0,
-    "price_per_1m_input_gt_200k": 4.0,
-    "price_per_1m_cached_input_lte_200k": 0.2,
-    "price_per_1m_cached_input_gt_200k": 0.4,
-    "price_per_1m_output_lte_200k": 12.0,
-    "price_per_1m_output_gt_200k": 18.0,
-    "rates": [
-      2.0,
-      0.2,
-      12.0
-    ],
-    "verified_at": "2026-10-13"
-  },
-  "gemini-3.8-pro": {
-    "model": "Gemini 3.8 Pro",
-    "type": "Text, Image, Video, Audio",
-    "region": "Global",
-    "price_per_1m_input_lte_200k": 1.25,
-    "price_per_1m_input_gt_200k": 2.5,
-    "price_per_1m_cached_input_lte_200k": 0.3125,
-    "price_per_1m_cached_input_gt_200k": 0.625,
-    "price_per_1m_output_lte_200k": 5.0,
-    "price_per_1m_output_gt_200k": 10.0,
-    "rates": [
-      1.25,
-      0.3125,
-      5.0
-    ],
-    "verified_at": "2026-10-13"
-  },
-  "gemini-2.5-flash": {
-    "model": "Gemini 2.5 Flash",
-    "type": "Text, Image, Video, Audio",
-    "region": "Global",
-    "price_per_1m_input_lte_200k": 0.075,
-    "price_per_1m_input_gt_200k": 0.075,
-    "price_per_1m_cached_input_lte_200k": 0.01875,
-    "price_per_1m_cached_input_gt_200k": 0.01875,
-    "price_per_1m_output_lte_200k": 0.3,
-    "price_per_1m_output_gt_200k": 0.3,
-    "rates": [
-      0.075,
-      0.01875,
-      0.3
-    ],
-    "verified_at": "2026-10-13"
-  },
-  "gemini-1.5-flash": {
-    "model": "Gemini 1.5 Flash",
-    "type": "Text, Image, Video, Audio",
-    "region": "Global",
-    "price_per_1m_input_lte_200k": 0.075,
-    "price_per_1m_input_gt_200k": 0.15,
-    "price_per_1m_cached_input_lte_200k": 0.01875,
-    "price_per_1m_cached_input_gt_200k": 0.0375,
-    "price_per_1m_output_lte_200k": 0.3,
-    "price_per_1m_output_gt_200k": 0.6,
-    "rates": [
-      0.075,
-      0.01875,
-      0.3
-    ],
-    "verified_at": "2026-10-13"
-  },
-  "gemini-2.5-pro": {
-    "model": "Gemini 2.5 Pro",
-    "type": "Text, Image, Video, Audio",
-    "region": "Global",
-    "price_per_1m_input_lte_200k": 1.25,
-    "price_per_1m_input_gt_200k": 2.5,
-    "price_per_1m_cached_input_lte_200k": 0.3125,
-    "price_per_1m_cached_input_gt_200k": 0.625,
-    "price_per_1m_output_lte_200k": 5.0,
-    "price_per_1m_output_gt_200k": 10.0,
-    "rates": [
-      1.25,
-      0.3125,
-      5.0
-    ],
-    "verified_at": "2026-10-13"
-  },
-  "gemini-1.5-pro": {
-    "model": "Gemini 1.5 Pro",
-    "type": "Text, Image, Video, Audio",
-    "region": "Global",
-    "price_per_1m_input_lte_200k": 1.25,
-    "price_per_1m_input_gt_200k": 2.5,
-    "price_per_1m_cached_input_lte_200k": 0.3125,
-    "price_per_1m_cached_input_gt_200k": 0.625,
-    "price_per_1m_output_lte_200k": 5.0,
-    "price_per_1m_output_gt_200k": 10.0,
-    "rates": [
-      1.25,
-      0.3125,
-      5.0
-    ],
-    "verified_at": "2026-10-13"
+    "expires_at": null
   },
   "claude-sonnet-4.6": {
-    "model": "Claude Sonnet 4.6",
-    "type": "Text, Image",
-    "region": "Global",
-    "price_per_1m_input_lte_200k": 3.0,
-    "price_per_1m_input_gt_200k": 3.0,
-    "price_per_1m_cached_input_lte_200k": 0.3,
-    "price_per_1m_cached_input_gt_200k": 0.3,
-    "price_per_1m_output_lte_200k": 15.0,
-    "price_per_1m_output_gt_200k": 15.0,
-    "rates": [
-      3.0,
-      0.3,
-      15.0
-    ],
-    "verified_at": "2026-10-13"
-  },
-  "claude-3.7-sonnet": {
-    "model": "Claude 3.7 Sonnet",
-    "type": "Text, Image",
-    "region": "Global",
-    "price_per_1m_input_lte_200k": 3.0,
-    "price_per_1m_input_gt_200k": 3.0,
-    "price_per_1m_cached_input_lte_200k": 0.3,
-    "price_per_1m_cached_input_gt_200k": 0.3,
-    "price_per_1m_output_lte_200k": 15.0,
-    "price_per_1m_output_gt_200k": 15.0,
-    "rates": [
-      3.0,
-      0.3,
-      15.0
-    ],
-    "verified_at": "2026-10-13"
-  },
-  "claude-3.5-sonnet": {
-    "model": "Claude 3.5 Sonnet",
-    "type": "Text, Image",
-    "region": "Global",
-    "price_per_1m_input_lte_200k": 3.0,
-    "price_per_1m_input_gt_200k": 3.0,
-    "price_per_1m_cached_input_lte_200k": 0.3,
-    "price_per_1m_cached_input_gt_200k": 0.3,
-    "price_per_1m_output_lte_200k": 15.0,
-    "price_per_1m_output_gt_200k": 15.0,
-    "rates": [
-      3.0,
-      0.3,
-      15.0
-    ],
-    "verified_at": "2026-10-13"
-  },
-  "claude-3.5-haiku": {
-    "model": "Claude 3.5 Haiku",
+    "model": "Anthropic: Claude Sonnet 4.6",
     "type": "Text",
     "region": "Global",
-    "price_per_1m_input_lte_200k": 0.8,
-    "price_per_1m_input_gt_200k": 0.8,
-    "price_per_1m_cached_input_lte_200k": 0.08,
-    "price_per_1m_cached_input_gt_200k": 0.08,
-    "price_per_1m_output_lte_200k": 4.0,
-    "price_per_1m_output_gt_200k": 4.0,
+    "price_per_1m_input_lte_200k": 3.0,
+    "price_per_1m_input_gt_200k": 3.0,
+    "price_per_1m_cached_input_lte_200k": 0.3,
+    "price_per_1m_cached_input_gt_200k": 0.3,
+    "price_per_1m_output_lte_200k": 15.0,
+    "price_per_1m_output_gt_200k": 15.0,
     "rates": [
-      0.8,
-      0.08,
-      4.0
+      3.0,
+      0.3,
+      15.0
     ],
-    "verified_at": "2026-10-13"
+    "verified_at": "2026-10-13",
+    "expires_at": null
   },
-  "claude-3-opus": {
-    "model": "Claude 3 Opus",
-    "type": "Text, Image",
-    "region": "Global",
-    "price_per_1m_input_lte_200k": 15.0,
-    "price_per_1m_input_gt_200k": 15.0,
-    "price_per_1m_cached_input_lte_200k": 1.5,
-    "price_per_1m_cached_input_gt_200k": 1.5,
-    "price_per_1m_output_lte_200k": 75.0,
-    "price_per_1m_output_gt_200k": 75.0,
-    "rates": [
-      15.0,
-      1.5,
-      75.0
-    ],
-    "verified_at": "2026-10-13"
-  },
-  "gpt-4o": {
-    "model": "GPT-4o",
-    "type": "Text, Image",
-    "region": "Global",
-    "price_per_1m_input_lte_200k": 2.5,
-    "price_per_1m_input_gt_200k": 2.5,
-    "price_per_1m_cached_input_lte_200k": 1.25,
-    "price_per_1m_cached_input_gt_200k": 1.25,
-    "price_per_1m_output_lte_200k": 10.0,
-    "price_per_1m_output_gt_200k": 10.0,
-    "rates": [
-      2.5,
-      1.25,
-      10.0
-    ],
-    "verified_at": "2026-10-13"
-  },
-  "gpt-4o-mini": {
-    "model": "GPT-4o mini",
-    "type": "Text, Image",
+  "gpt-oss-120b": {
+    "model": "OpenAI: gpt-oss-120b",
+    "type": "Text",
     "region": "Global",
     "price_per_1m_input_lte_200k": 0.15,
     "price_per_1m_input_gt_200k": 0.15,
@@ -289,57 +50,25 @@
       0.075,
       0.6
     ],
-    "verified_at": "2026-10-13"
+    "verified_at": "2026-10-13",
+    "expires_at": null
   },
-  "gpt-oss-120b": {
-    "model": "GPT-OSS 120B",
+  "claude-opus-4.6": {
+    "model": "Anthropic: Claude Opus 4.6",
     "type": "Text",
     "region": "Global",
-    "price_per_1m_input_lte_200k": 0.15,
-    "price_per_1m_input_gt_200k": 0.15,
-    "price_per_1m_cached_input_lte_200k": 0.0375,
-    "price_per_1m_cached_input_gt_200k": 0.0375,
-    "price_per_1m_output_lte_200k": 0.6,
-    "price_per_1m_output_gt_200k": 0.6,
+    "price_per_1m_input_lte_200k": 5.0,
+    "price_per_1m_input_gt_200k": 5.0,
+    "price_per_1m_cached_input_lte_200k": 0.5,
+    "price_per_1m_cached_input_gt_200k": 0.5,
+    "price_per_1m_output_lte_200k": 25.0,
+    "price_per_1m_output_gt_200k": 25.0,
     "rates": [
-      0.15,
-      0.0375,
-      0.6
+      5.0,
+      0.5,
+      25.0
     ],
-    "verified_at": "2026-10-13"
-  },
-  "o3-mini": {
-    "model": "o3-mini",
-    "type": "Text",
-    "region": "Global",
-    "price_per_1m_input_lte_200k": 1.1,
-    "price_per_1m_input_gt_200k": 1.1,
-    "price_per_1m_cached_input_lte_200k": 0.55,
-    "price_per_1m_cached_input_gt_200k": 0.55,
-    "price_per_1m_output_lte_200k": 4.4,
-    "price_per_1m_output_gt_200k": 4.4,
-    "rates": [
-      1.1,
-      0.55,
-      4.4
-    ],
-    "verified_at": "2026-10-13"
-  },
-  "o1": {
-    "model": "o1",
-    "type": "Text, Image",
-    "region": "Global",
-    "price_per_1m_input_lte_200k": 15.0,
-    "price_per_1m_input_gt_200k": 15.0,
-    "price_per_1m_cached_input_lte_200k": 7.5,
-    "price_per_1m_cached_input_gt_200k": 7.5,
-    "price_per_1m_output_lte_200k": 60.0,
-    "price_per_1m_output_gt_200k": 60.0,
-    "rates": [
-      15.0,
-      7.5,
-      60.0
-    ],
-    "verified_at": "2026-10-13"
+    "verified_at": "2026-10-13",
+    "expires_at": null
   }
 }
