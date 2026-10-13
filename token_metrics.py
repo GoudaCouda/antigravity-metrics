@@ -42,8 +42,12 @@ except ImportError:
     RICH_AVAILABLE = False
 
 
+GLOBAL_PRICING_SOURCE: Optional[str] = None
+
+
 def get_pricing_file_path() -> Path:
     """Finds model_pricing.json next to this script or in the global skill directory."""
+    global GLOBAL_PRICING_SOURCE
     script_dir = Path(__file__).resolve().parent
     local_path = script_dir / "model_pricing.json"
     if local_path.exists():
@@ -52,6 +56,7 @@ def get_pricing_file_path() -> Path:
     home = Path.home()
     global_path = home / ".gemini" / "antigravity-cli" / "skills" / "token-metrics" / "model_pricing.json"
     if global_path.exists():
+        GLOBAL_PRICING_SOURCE = str(global_path)
         return global_path
 
     return local_path
@@ -767,7 +772,10 @@ def render_clean_card(data: Dict[str, Any]):
 
     console.print()
     console.print(panel)
-    console.print()
+    if GLOBAL_PRICING_SOURCE:
+        console.print(f"[dim]ℹ Loaded pricing from global: {GLOBAL_PRICING_SOURCE}[/dim]\n")
+    else:
+        console.print()
 
 
 def render_model_breakdown_table(data: Dict[str, Any]):
