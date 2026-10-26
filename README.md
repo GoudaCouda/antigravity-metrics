@@ -63,9 +63,25 @@ esc to cancel                                                                   
 
 You can install and use `antigravity-metrics` either as a **native Antigravity Skill / Plugin** or as a **standalone CLI tool**.
 
-### Option A: Install as an Antigravity Skill (Recommended)
+### Option A: Install via Antigravity Agent (Recommended)
 
-To invoke metrics natively in your chat sessions via the `/token-metrics` slash command in **both the Antigravity IDE and `agy` CLI**, install directly into the global configuration directory (`~/.gemini/config/skills/token_metrics`):
+Inside Antigravity (IDE or `agy` CLI), simply send this prompt to your agent:
+
+```text
+Please install the token-metrics skill from https://github.com/GoudaCouda/antigravity-metrics.git into ~/.gemini/config/skills/token_metrics so I can use /token-metrics.
+```
+
+Your agent will automatically download and set up the skill. Once installed, simply type:
+```text
+/token-metrics
+```
+inside any Antigravity conversation!
+
+---
+
+### Option B: Manual Skill Installation (Terminal)
+
+To manually install into your global configuration directory (`~/.gemini/config/skills/token_metrics`):
 
 #### Quick 1-Line Install to Global Config Location
 
@@ -101,7 +117,7 @@ inside any Antigravity conversation (IDE or CLI)!
 
 ---
 
-### Option B: Install as a Standalone CLI Tool
+### Option C: Install as a Standalone CLI Tool
 
 Install globally in your Python environment:
 

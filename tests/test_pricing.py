@@ -30,6 +30,14 @@ class TestPricing(unittest.TestCase):
         self.assertEqual(canonical, "gemini-3.8-flash")
         self.assertEqual(rates, (0.75, 0.075, 3.75))
 
+        canonical_argon, rates_argon, _ = resolve_model_rates("Argon 4", auto_sync=False)
+        self.assertEqual(canonical_argon, "argon-4")
+        self.assertEqual(rates_argon, (2.0, 0.1, 10.0))
+
+        canonical_gemini_argon, rates_ga, _ = resolve_model_rates("Gemini 4 Argon", auto_sync=False)
+        self.assertEqual(canonical_gemini_argon, "gemini-4-argon")
+        self.assertEqual(rates_ga, (2.0, 0.1, 10.0))
+
     def test_missing_model_without_sync(self):
         with self.assertRaises(MissingModelPricingError):
             resolve_model_rates("NonExistentModel9999", auto_sync=False)
